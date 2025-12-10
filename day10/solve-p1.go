@@ -2,40 +2,71 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func parseMachine(machine string) ([]string, [][]int) {
+func parseMachine(machine string) (int, []int) {
 	split1 := strings.Split(machine, "] ")
 	split2 := strings.Split(split1[1], " {")
 
 	lights := strings.Split(split1[0][1:], "")
-	rawButtons := strings.Split(split2[0], " ")
+	buttons := strings.Split(split2[0], " ")
 
-	toggles := make([][]int, 0)
-	for _, b := range rawButtons {
-		togglesString := strings.Split(b[1:len(b)-1], ",")
-		tmp := make([]int, 0)
-		for _, s := range togglesString {
-			t, _ := strconv.Atoi(s)
-			tmp = append(tmp, t)
+	// Represent the light (target) via binary
+	targetBinaryValue := 0.0
+	for i, s := range lights {
+		if s == "#" {
+			targetBinaryValue += math.Pow(2, float64(len(lights)-1-i))
 		}
-		toggles = append(toggles, tmp)
 	}
 
-	return lights, toggles
+	// Represent the presses via binary
+	buttonBinaryValues := make([]int, 0)
+	for _, b := range buttons {
+		powStrings := strings.Split(b[1:len(b)-1], ",")
+		binaryValue := 0.0
+		for _, s := range powStrings {
+			x, _ := strconv.Atoi(s)
+			binaryValue += math.Pow(2, float64(len(lights)-1-x))
+		}
+		buttonBinaryValues = append(buttonBinaryValues, int(binaryValue))
+	}
+
+	return int(targetBinaryValue), buttonBinaryValues
 }
 
 func P1() {
-	data, _ := os.ReadFile("inputs/smol.txt")
+	data, _ := os.ReadFile("inputs/big.txt")
 	machines := strings.Split(string(data), "\r\n")
 
+	totalPresses := 0
 	for _, machine := range machines {
-		lights, toggles := parseMachine(machine)
-		fmt.Println(lights, toggles)
+		targetBinaryValue, buttonBinaryValues := parseMachine(machine)
 
-		maxCombinations := 
+		minPresses := len(buttonBinaryValues) + 1
+		maxCombinations := int(math.Pow(2, float64(len(buttonBinaryValues))) - 1)
+		for iter := 1; iter <= maxCombinations; iter++ {
+			mask := fmt.Sprintf("%0*b", len(buttonBinaryValues), iter)
+			current := 0
+			presses := 0
+			for idx := len(mask) - 1; idx >= 0; idx-- {
+				press := mask[idx]
+				if press == '1' {
+					presses++
+					current ^= buttonBinaryValues[idx]
+				}
+			}
+
+			if current == targetBinaryValue && minPresses > presses {
+				minPresses = presses
+			}
+		}
+
+		totalPresses += minPresses
 	}
+
+	fmt.Println("Le answer is:", totalPresses)
 }
