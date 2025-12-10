@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func parseMachine(machine string) (int, []int) {
+func parseMachineP1(machine string) (int, []int) {
 	split1 := strings.Split(machine, "] ")
 	split2 := strings.Split(split1[1], " {")
 
@@ -44,7 +44,7 @@ func P1() {
 
 	totalPresses := 0
 	for _, machine := range machines {
-		targetBinaryValue, buttonBinaryValues := parseMachine(machine)
+		targetBinaryValue, buttonBinaryValues := parseMachineP1(machine)
 
 		minPresses := len(buttonBinaryValues) + 1
 		maxCombinations := int(math.Pow(2, float64(len(buttonBinaryValues))) - 1)
@@ -52,7 +52,7 @@ func P1() {
 			mask := fmt.Sprintf("%0*b", len(buttonBinaryValues), iter)
 			current := 0
 			presses := 0
-			for idx := len(mask) - 1; idx >= 0; idx-- {
+			for idx := 0; idx < len(mask); idx++ {
 				press := mask[idx]
 				if press == '1' {
 					presses++
